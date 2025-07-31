@@ -1,19 +1,17 @@
 [versions]
-agp = "8.5.0-alpha06"
-kotlin = "1.9.0"
-coreKtx = "1.13.0"
+agp = "8.11.1"
+kotlin = "2.2.0"
+ksp = "2.2.0-2.0.2"
+coreKtx = "1.16.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-appcompat = "1.6.1"
-material = "1.11.0"
-activity = "1.9.0"
-constraintlayout = "2.1.4"
-hilt = "2.50"
-javapoet = "1.13.0"
-auto-service = "1.1.1"
-incap = "1.0.0"
-jetbrainsKotlinJvm = "1.9.0"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.7.1"
+material = "1.12.0"
+activity = "1.10.1"
+constraintlayout = "2.2.1"
+hilt = "2.57"
+kotlinPoet = "2.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -25,16 +23,17 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+hilt-core = { group = "com.google.dagger", name = "hilt-core", version.ref = "hilt" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 dagger = { group = "com.google.dagger", name = "dagger", version.ref = "hilt" }
-javapoet = { group = "com.squareup", name = "javapoet", version.ref = "javapoet" }
-google-auto-service = { group = "com.google.auto.service", name = "auto-service", version.ref = "auto-service" }
-incap-core = { group = "net.ltgt.gradle.incap", name = "incap", version.ref = "incap" }
-incap-processor = { group = "net.ltgt.gradle.incap", name = "incap-processor", version.ref = "incap" }
+kotlinpoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoet" }
+kotlinpoet-ksp = { group = "com.squareup", name = "kotlinpoet-ksp", version.ref = "kotlinPoet" }
+symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

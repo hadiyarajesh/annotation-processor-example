@@ -1,13 +1,9 @@
-package com.hadiyarajesh.codegeneration
+package com.hadiyarajesh.codegeneration.ui
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import com.hadiyarajesh.codegeneration.R
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

@@ -1,8 +1,7 @@
-package com.hadiyarajesh.codegeneration
+package com.hadiyarajesh.codegeneration.repository
 
 import android.util.Log
 import com.hadiyarajesh.annotations.GenerateBinding
-import java.util.UUID
 import javax.inject.Inject
 
 interface MyRepository {

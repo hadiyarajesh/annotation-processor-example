@@ -1,29 +1,20 @@
 plugins {
     id("java-library")
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-    kotlin("kapt")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ksp)
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 dependencies {
     implementation(project(":annotations"))
     implementation(libs.dagger)
+    implementation(libs.hilt.core)
+    implementation(libs.symbol.processing.api)
 
-    implementation(libs.javapoet) {
-        because("A Java API for generating .java source files")
-    }
-
-    compileOnly(libs.google.auto.service) {
-        because("A configuration/metadata generator for java.util.ServiceLoader-style service providers")
-    }
-    kapt(libs.google.auto.service)
-
-    compileOnly(libs.incap.core) {
-        because("Helper library and annotation processor for building incremental annotation processors")
-    }
-    kapt(libs.incap.processor)
+    implementation(libs.kotlinpoet)
+    implementation(libs.kotlinpoet.ksp)
 }
