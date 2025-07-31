@@ -1,83 +1,115 @@
 package com.hadiyarajesh.processors
 
-import com.google.auto.service.AutoService
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.Dependencies
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.processing.SymbolProcessor
+import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSType
 import com.hadiyarajesh.annotations.GenerateBinding
-import com.squareup.javapoet.AnnotationSpec
-import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.JavaFile
-import com.squareup.javapoet.MethodSpec
-import com.squareup.javapoet.TypeName
-import com.squareup.javapoet.TypeSpec
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.ksp.toClassName
+import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.writeTo
 import dagger.Binds
 import dagger.Module
-import net.ltgt.gradle.incap.IncrementalAnnotationProcessor
-import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType
-import javax.annotation.processing.AbstractProcessor
-import javax.annotation.processing.ProcessingEnvironment
-import javax.annotation.processing.Processor
-import javax.annotation.processing.RoundEnvironment
-import javax.lang.model.SourceVersion
-import javax.lang.model.element.Modifier
-import javax.lang.model.element.Name
-import javax.lang.model.element.TypeElement
-import javax.lang.model.type.TypeMirror
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
-@AutoService(Processor::class)
-@IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.ISOLATING)
-class GenerateBindingProcessor : AbstractProcessor() {
-    private val generateBindingAnnotation = GenerateBinding::class
+/**
+ * A KSP processor that generates Dagger-Hilt `@Module` classes with `@Binds` functions
+ * for annotated implementation classes using `@GenerateBinding(type = ...)`.
+ *
+ * This helps reduce boilerplate in setting up Hilt bindings.
+ *
+ * Example:
+ * ```
+ * @GenerateBinding(type = MyRepository::class)
+ * class MyRepositoryImpl : MyRepository
+ * ```
+ * This generates:
+ * ```
+ * @Module
+ * @InstallIn(SingletonComponent::class)
+ * abstract class MyRepositoryModule {
+ *     @Binds
+ *     abstract fun bindMyRepository(impl: MyRepositoryImpl): MyRepository
+ * }
+ * ```
+ */
+class GenerateBindingProcessor(
+    private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger
+) : SymbolProcessor {
+    private val annotationClass = GenerateBinding::class
 
-    override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(generateBindingAnnotation.qualifiedName!!)
+    override fun process(resolver: Resolver): List<KSAnnotated> {
+        // Find all classes annotated with @GenerateBinding
+        val symbols = resolver
+            .getSymbolsWithAnnotation(annotationClass.qualifiedName!!)
+            .filterIsInstance<KSClassDeclaration>()
+
+        // Process each class to generate a Hilt module
+        for (classDeclaration in symbols) {
+            logger.info("Generating Hilt module for: ${classDeclaration.qualifiedName}")
+            generateModule(classDeclaration)
+        }
+
+        return emptyList()
     }
 
-    override fun getSupportedSourceVersion(): SourceVersion {
-        return SourceVersion.latestSupported()
-    }
+    /**
+     * Generates a Dagger-Hilt module with a `@Binds` method that binds
+     * the implementation class to the interface specified in the annotation.
+     */
+    private fun generateModule(
+        implClass: KSClassDeclaration
+    ) {
+        // Extract the @GenerateBinding annotation
+        val annotation = implClass.annotations
+            .first { it.shortName.asString() == annotationClass.simpleName }
 
-    override fun init(p0: ProcessingEnvironment?) {
-        super.init(p0)
-    }
+        // Get the 'type' parameter from the annotation (the interface to bind)
+        val typeArg = annotation.arguments
+            .first { it.name?.asString() == "type" }.value as KSType
 
-    override fun process(type: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
-        roundEnv
-            .getElementsAnnotatedWith(generateBindingAnnotation.java)
-            .filterIsInstance<TypeElement>()
-            .forEach { typeElement: TypeElement ->
-                generateHiltModuleWithBinding(typeElement)
-            }
+        val interfaceName = typeArg.declaration.simpleName.asString()
+        val implClassName = implClass.simpleName.asString()
+        val packageName = implClass.packageName.asString()
+        val moduleName = "${interfaceName}Module"
 
-        return true
-    }
-
-    private fun generateHiltModuleWithBinding(type: TypeElement) {
-        val firstInterface: TypeMirror = type.interfaces.firstOrNull() ?: type.superclass
-        val boundType: TypeName = TypeName.get(firstInterface)
-        val boundTypeName: Name = processingEnv.typeUtils.asElement(firstInterface).simpleName
-
-        val methodSpec = MethodSpec.methodBuilder("bind$boundTypeName")
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addAnnotation(Binds::class.java)
-            .addParameter(TypeName.get(type.asType()), "impl")
-            .returns(boundType)
-
-        val classSpec = TypeSpec.classBuilder("${boundTypeName}Module")
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addAnnotation(Module::class.java)
-            .addAnnotation(
-                AnnotationSpec.builder(ClassName.get("dagger.hilt", "InstallIn"))
-                    .addMember(
-                        "value",
-                        "\$T.class",
-                        ClassName.get("dagger.hilt.components", "SingletonComponent")
-                    )
-                    .build()
-            )
-            .addMethod(methodSpec.build())
-            .addOriginatingElement(type)
+        // Create the @Binds function
+        val bindFunction = FunSpec.builder("bind$interfaceName")
+            .addModifiers(KModifier.ABSTRACT)
+            .addAnnotation(Binds::class)
+            .addParameter("impl", implClass.toClassName())
+            .returns(typeArg.toTypeName())
             .build()
 
-        val javaFile = JavaFile.builder(ClassName.get(type).packageName(), classSpec).build()
-        javaFile.writeTo(processingEnv.filer)
+        // Create the Dagger module class
+        val moduleClass = TypeSpec.classBuilder(moduleName)
+            .addKdoc("Hilt module for binding [$interfaceName] to [$implClassName].")
+            .addModifiers(KModifier.ABSTRACT)
+            .addAnnotation(Module::class)
+            .addAnnotation(
+                AnnotationSpec.builder(InstallIn::class)
+                    .addMember("value = [%T::class]", SingletonComponent::class)
+                    .build()
+            )
+            .addFunction(bindFunction)
+            .build()
+
+        // Write the file to generated sources
+        val file = FileSpec.builder(packageName, moduleName)
+            .addType(moduleClass)
+            .build()
+
+        file.writeTo(codeGenerator, Dependencies(false, implClass.containingFile!!))
     }
 }
