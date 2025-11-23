@@ -1,5 +1,5 @@
 plugins {
-    id("java-library")
+    alias(libs.plugins.java.library)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ksp)
 }
@@ -10,11 +10,12 @@ java {
 }
 
 dependencies {
-    implementation(project(":annotations"))
     implementation(libs.dagger)
     implementation(libs.hilt.core)
     implementation(libs.symbol.processing.api)
 
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinpoet.ksp)
+
+    implementation(project(":annotations"))
 }

@@ -9,7 +9,5 @@ import javax.inject.Inject
 class MyViewModel @Inject constructor(
     private val repository: MyRepository
 ) : ViewModel() {
-    fun doSomething() {
-        repository.doSomething()
-    }
+    fun getMessage(): String = repository.getMessage()
 }

@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CodeGeneration"
+rootProject.name = "Annotation Processor"
 include(":app")
 include(":annotations")
 include(":processors")

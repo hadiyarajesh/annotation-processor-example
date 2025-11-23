@@ -1,8 +1,10 @@
 package com.hadiyarajesh.codegeneration.ui
 
 import android.os.Bundle
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import com.hadiyarajesh.codegeneration.R
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,6 +16,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        myViewModel.doSomething()
+        val message = myViewModel.getMessage()
+        findViewById<TextView>(R.id.message).text =
+            HtmlCompat.fromHtml(message, HtmlCompat.FROM_HTML_MODE_COMPACT)
     }
 }
